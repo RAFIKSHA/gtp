@@ -1,0 +1,18 @@
+# Core Django Framework & REST API
+django>=5.1,<6.0
+djangorestframework>=3.15,<3.16
+django-cors-headers>=4.5,<5.0
+
+# Database (PostgreSQL for Supabase)
+psycopg2-binary>=2.9,<3.0
+
+# Configuration & Security
+python-dotenv>=1.0,<2.0
+
+# Production WSGI Server & Static Files (for Render)
+gunicorn>=23.0,<24.0
+whitenoise>=6.8,<7.0
+
+# HTTP Client (for CodexPetra SSO Verification)
+requests>=2.32,<3.0
+

@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* -------------------------------------------------------------------------- */
+/* CodexPetra GATE Portal: 3 Complete Themes                                  */
+/* -------------------------------------------------------------------------- */
+
+/* 1. Obsidian Black (Default Brand Theme) */
+:root,
+[data-theme="obsidian"] {
+  --bg-primary: #09090D;
+  --bg-surface: #12131A;
+  --bg-surface-elevated: #181A24;
+  --border-subtle: #232536;
+  --border-strong: #32354D;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+
+  --accent-purple: #8B16F7;
+  --accent-magenta: #C42BEE;
+  --accent-orange: #FF791E;
+
+  --badge-bg: rgba(139, 22, 247, 0.12);
+  --badge-border: rgba(139, 22, 247, 0.3);
+  --badge-text: #C42BEE;
+}
+
+/* 2. Crisp White (Clean Professional Day Mode) */
+[data-theme="crisp"] {
+  --bg-primary: #FFFFFF;
+  --bg-surface: #F8FAFC;
+  --bg-surface-elevated: #FFFFFF;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+
+  --accent-purple: #8B16F7;
+  --accent-magenta: #C42BEE;
+  --accent-orange: #FF791E;
+
+  --badge-bg: rgba(139, 22, 247, 0.08);
+  --badge-border: rgba(139, 22, 247, 0.25);
+  --badge-text: #8B16F7;
+}
+
+/* 3. Warm Study Mode (Parchment / Eye-Comfort Long Study Mode) */
+[data-theme="warm"] {
+  --bg-primary: #FBF8F1;
+  --bg-surface: #F2ECE0;
+  --bg-surface-elevated: #FFFDF9;
+  --border-subtle: #E3D9C6;
+  --border-strong: #CDC0A6;
+  --text-primary: #2A241F;
+  --text-secondary: #5C5248;
+  --text-muted: #8A7E72;
+
+  --accent-purple: #8B16F7;
+  --accent-magenta: #C42BEE;
+  --accent-orange: #FF791E;
+
+  --badge-bg: rgba(139, 22, 247, 0.08);
+  --badge-border: rgba(139, 22, 247, 0.25);
+  --badge-text: #8B16F7;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-primary);
+  --color-surface: var(--bg-surface);
+  --color-surface-elevated: var(--bg-surface-elevated);
+  --color-border: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-brand-purple: #8B16F7;
+  --color-brand-magenta: #C42BEE;
+  --color-brand-orange: #FF791E;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base Body Styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
 }

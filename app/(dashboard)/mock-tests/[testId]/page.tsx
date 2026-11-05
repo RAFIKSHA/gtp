@@ -57,8 +57,9 @@ function ExamRoomContent({ testId }: { testId: string }) {
     const initExam = async () => {
       setLoading(true);
       setError(null);
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/mock-tests/${testId}/start/`, {
+        const res = await fetch(`${API_BASE}/api/v1/mock-tests/${testId}/start/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
@@ -131,8 +132,9 @@ function ExamRoomContent({ testId }: { testId: string }) {
         time_spent_seconds: 30,
       }));
 
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const res = await fetch(
-        `http://127.0.0.1:8000/api/v1/mock-tests/attempts/${examDataRef.current.attempt_id}/autosave/`,
+        `${API_BASE}/api/v1/mock-tests/attempts/${examDataRef.current.attempt_id}/autosave/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -166,8 +168,9 @@ function ExamRoomContent({ testId }: { testId: string }) {
         time_spent_seconds: 60,
       }));
 
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
       const res = await fetch(
-        `http://127.0.0.1:8000/api/v1/mock-tests/attempts/${examDataRef.current.attempt_id}/submit/`,
+        `${API_BASE}/api/v1/mock-tests/attempts/${examDataRef.current.attempt_id}/submit/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -45,16 +45,27 @@ class TopicSerializer(serializers.ModelSerializer):
 class SubjectSerializer(serializers.ModelSerializer):
     topics_count = serializers.IntegerField(source="topics.count", read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
+    paper_code = serializers.CharField(source="paper.code", read_only=True, default=None)
+    branch_name = serializers.CharField(source="branch.name", read_only=True, default=None)
+    branch_code = serializers.CharField(source="branch.code", read_only=True, default=None)
 
     class Meta:
         model = Subject
         fields = [
             "id",
+            "branch",
+            "branch_name",
+            "branch_code",
+            "paper",
+            "paper_code",
+            "code",
             "name",
             "slug",
             "order_index",
             "description",
             "icon_name",
+            "is_active",
+            "is_published",
             "topics_count",
             "topics",
         ]

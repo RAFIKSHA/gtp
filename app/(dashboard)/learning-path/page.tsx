@@ -13,26 +13,64 @@ import {
   FileText,
   Sparkles,
   Loader2,
+  GitBranch,
+  Layers,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { fetchSubjects, toggleTopicCompletion } from "@/lib/api/questions";
+import { fetchSubjects, fetchLearningBranches, toggleTopicCompletion, LearningBranch } from "@/lib/api/questions";
+import { fetchStudentProfile } from "@/lib/api/student";
 import type { SubjectItem, TopicItem } from "@/types/question";
 
 export default function GuidedLearningPage() {
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
+  const [branches, setBranches] = useState<LearningBranch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>("CSE");
+  const [selectedPaper, setSelectedPaper] = useState<string>("CS");
   const [loading, setLoading] = useState<boolean>(true);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [activeNotesTopic, setActiveNotesTopic] = useState<TopicItem | null>(null);
 
+  // 1. Initial Load: Profile & Branches
+  useEffect(() => {
+    async function initDiscipline() {
+      try {
+        const [profile, branchesList] = await Promise.all([
+          fetchStudentProfile().catch(() => null),
+          fetchLearningBranches().catch(() => []),
+        ]);
+
+        if (branchesList.length > 0) {
+          setBranches(branchesList);
+          // If student has enrolled branch or primary paper, select it
+          if (profile?.enrolled_branch_code) {
+            setSelectedBranch(profile.enrolled_branch_code);
+          } else if (branchesList[0]) {
+            setSelectedBranch(branchesList[0].code);
+          }
+        }
+
+        if (profile?.primary_paper) {
+          setSelectedPaper(profile.primary_paper);
+        }
+      } catch (err) {
+        console.error("Failed to initialize learning path:", err);
+      }
+    }
+    initDiscipline();
+  }, []);
+
+  // 2. Fetch Syllabus Subjects when selectedBranch or selectedPaper changes
   useEffect(() => {
     async function loadSyllabus() {
       setLoading(true);
       try {
-        const data = await fetchSubjects("CS");
+        const data = await fetchSubjects(selectedPaper, selectedBranch);
         setSubjects(data);
         if (data.length > 0) {
           setExpandedSubject(data[0].slug);
+        } else {
+          setExpandedSubject(null);
         }
       } catch (err) {
         console.error("Failed to load syllabus:", err);
@@ -41,7 +79,7 @@ export default function GuidedLearningPage() {
       }
     }
     loadSyllabus();
-  }, []);
+  }, [selectedBranch, selectedPaper]);
 
   const handleToggleCompletion = async (topicId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,6 +98,8 @@ export default function GuidedLearningPage() {
     }
   };
 
+  const activeBranchObj = branches.find((b) => b.code.toUpperCase() === selectedBranch.toUpperCase());
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
@@ -70,11 +110,11 @@ export default function GuidedLearningPage() {
               Guided Learning Path
             </h1>
             <Badge variant="purple" size="sm">
-              Official GATE CSE Syllabus
+              {activeBranchObj ? `${activeBranchObj.name} (${activeBranchObj.code})` : "GATE CSE Syllabus"}
             </Badge>
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-1">
-            Follow the pedagogical sequence recommended for GATE Computer Science. Master concept notes and mark topics complete.
+            Follow the pedagogical sequence recommended for your academic branch. Master concept notes and mark topics complete.
           </p>
         </div>
 
@@ -83,6 +123,58 @@ export default function GuidedLearningPage() {
             Explore All Subjects
           </Button>
         </Link>
+      </div>
+
+      {/* Dynamic Academic Discipline Selector Bar */}
+      <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-[#8B16F7]">
+            <GitBranch className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">
+              Academic Branch
+            </span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                aria-label="Select Academic Branch"
+                className="text-xs font-semibold bg-[var(--bg-surface-elevated)] border border-[var(--border-strong)] rounded-lg px-2.5 py-1 text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[#8B16F7]"
+              >
+                {branches.length === 0 ? (
+                  <option value="CSE">Computer Science & Engineering (CSE)</option>
+                ) : (
+                  branches.map((b) => (
+                    <option key={b.id} value={b.code}>
+                      {b.name} ({b.code})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Paper Toggle */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider mr-1">
+            Target Paper:
+          </span>
+          {["CS", "DA"].map((paper) => (
+            <button
+              key={paper}
+              onClick={() => setSelectedPaper(paper)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all border ${
+                selectedPaper === paper
+                  ? "bg-[#8B16F7] text-white border-[#8B16F7] shadow-sm"
+                  : "bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              GATE {paper}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (

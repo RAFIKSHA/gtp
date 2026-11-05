@@ -17,8 +17,9 @@ export default function MockTestsPage() {
   const fetchMockTests = async () => {
     setLoading(true);
     setError(null);
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/mock-tests/");
+      const res = await fetch(`${API_BASE}/api/v1/mock-tests/`);
       if (!res.ok) throw new Error("Failed to load mock tests from server");
       const data: MockTestItem[] = await res.json();
       setTests(data);

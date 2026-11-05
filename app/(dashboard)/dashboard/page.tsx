@@ -32,7 +32,8 @@ export default function StudentDashboardPage() {
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
 
-    fetch("http://127.0.0.1:8000/api/v1/analytics/dashboard/")
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    fetch(`${API_BASE}/api/v1/analytics/dashboard/`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: AnalyticsDashboardResponse | null) => {
         if (data) setAnalytics(data);

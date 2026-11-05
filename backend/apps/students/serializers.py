@@ -1,12 +1,14 @@
 from rest_framework import serializers
 from apps.students.models import StudentProfile
-from apps.academics.models import GatePaper
+from apps.academics.models import GatePaper, Branch
 from apps.academics.serializers import GatePaperSerializer
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     primary_paper_details = GatePaperSerializer(source="primary_paper", read_only=True)
     secondary_paper_details = GatePaperSerializer(source="secondary_paper", read_only=True)
+    enrolled_branch_name = serializers.CharField(source="enrolled_branch.name", read_only=True, default=None)
+    enrolled_branch_code = serializers.CharField(source="enrolled_branch.code", read_only=True, default=None)
 
     primary_paper = serializers.PrimaryKeyRelatedField(
         queryset=GatePaper.objects.filter(is_active=True),
@@ -15,6 +17,11 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     )
     secondary_paper = serializers.PrimaryKeyRelatedField(
         queryset=GatePaper.objects.filter(is_active=True),
+        required=False,
+        allow_null=True
+    )
+    enrolled_branch = serializers.PrimaryKeyRelatedField(
+        queryset=Branch.objects.filter(is_active=True),
         required=False,
         allow_null=True
     )
@@ -30,6 +37,9 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "college_name",
             "graduation_year",
             "target_gate_year",
+            "enrolled_branch",
+            "enrolled_branch_name",
+            "enrolled_branch_code",
             "primary_paper",
             "secondary_paper",
             "primary_paper_details",

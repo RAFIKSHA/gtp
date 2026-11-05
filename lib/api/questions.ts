@@ -6,12 +6,41 @@ import type {
   BookmarkItem,
 } from "@/types/question";
 
+export interface LearningBranch {
+  id: string;
+  name: string;
+  code: string;
+  slug: string;
+  description: string;
+  icon_name: string;
+  is_primary?: boolean;
+  subjects_count?: number;
+  gate_paper_code?: string;
+  gate_paper_name?: string;
+}
+
+/**
+ * Fetch active academic branches, optionally filtered by GATE paper.
+ */
+export async function fetchLearningBranches(paperCode?: string): Promise<LearningBranch[]> {
+  const params: Record<string, string> = {};
+  if (paperCode) params.paper_code = paperCode;
+  return apiClient<LearningBranch[]>("/api/v1/learning/branches/", {
+    params,
+    cache: "no-store",
+  });
+}
+
 /**
  * Fetch all syllabus subjects with nested topics and counts.
+ * Supports filtering by paper and/or branch.
  */
-export async function fetchSubjects(paper: string = "CS"): Promise<SubjectItem[]> {
-  return apiClient<SubjectItem[]>("/api/v1/academics/subjects/", {
-    params: { paper },
+export async function fetchSubjects(paper: string = "CS", branch?: string): Promise<SubjectItem[]> {
+  const params: Record<string, string> = {};
+  if (paper) params.paper = paper;
+  if (branch) params.branch = branch;
+  return apiClient<SubjectItem[]>("/api/v1/learning/subjects/", {
+    params,
     cache: "no-store",
   });
 }

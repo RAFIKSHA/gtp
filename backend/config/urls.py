@@ -10,6 +10,7 @@ from apps.academics.views import (
     subject_list,
     subject_detail,
     toggle_topic_completion,
+    learning_branches_list,
 )
 from apps.students.views import get_student_profile, submit_student_onboarding
 from apps.questions.views import (
@@ -29,6 +30,14 @@ from apps.mock_tests.views import (
 from apps.analytics.views import analytics_dashboard
 from apps.administration.views import (
     admin_overview,
+    admin_branches_list_create,
+    admin_branch_detail,
+    admin_branch_toggle_status,
+    admin_gate_papers_list,
+    admin_branch_gate_mappings_list_create,
+    admin_branch_gate_mapping_detail,
+    admin_branch_gate_mapping_toggle_primary,
+    admin_branch_gate_mapping_toggle_active,
     admin_subjects_list_create,
     admin_subject_detail,
     admin_topics_list_create,
@@ -52,6 +61,8 @@ urlpatterns = [
     path("api/v1/academics/subjects/", subject_list, name="subject-list"),
     path("api/v1/academics/subjects/<slug:slug>/", subject_detail, name="subject-detail"),
     path("api/v1/academics/topics/<int:topic_id>/toggle-completion/", toggle_topic_completion, name="toggle-topic-completion"),
+    path("api/v1/learning/branches/", learning_branches_list, name="learning-branches-list"),
+    path("api/v1/learning/subjects/", subject_list, name="learning-subjects-list"),
 
     # Student Profile & Onboarding
     path("api/v1/students/profile/", get_student_profile, name="student-profile"),
@@ -76,6 +87,14 @@ urlpatterns = [
 
     # Administration & Platform Management (Role Protected)
     path("api/v1/admin/overview/", admin_overview, name="admin-overview"),
+    path("api/v1/admin/branches/", admin_branches_list_create, name="admin-branches-list-create"),
+    path("api/v1/admin/branches/<uuid:branch_id>/", admin_branch_detail, name="admin-branch-detail"),
+    path("api/v1/admin/branches/<uuid:branch_id>/toggle-status/", admin_branch_toggle_status, name="admin-branch-toggle-status"),
+    path("api/v1/admin/gate-papers/", admin_gate_papers_list, name="admin-gate-papers-list"),
+    path("api/v1/admin/branch-gate-mappings/", admin_branch_gate_mappings_list_create, name="admin-branch-gate-mappings-list-create"),
+    path("api/v1/admin/branch-gate-mappings/<uuid:mapping_id>/", admin_branch_gate_mapping_detail, name="admin-branch-gate-mapping-detail"),
+    path("api/v1/admin/branch-gate-mappings/<uuid:mapping_id>/toggle-primary/", admin_branch_gate_mapping_toggle_primary, name="admin-branch-gate-mapping-toggle-primary"),
+    path("api/v1/admin/branch-gate-mappings/<uuid:mapping_id>/toggle-active/", admin_branch_gate_mapping_toggle_active, name="admin-branch-gate-mapping-toggle-active"),
     path("api/v1/admin/subjects/", admin_subjects_list_create, name="admin-subjects-list-create"),
     path("api/v1/admin/subjects/<int:subject_id>/", admin_subject_detail, name="admin-subject-detail"),
     path("api/v1/admin/topics/", admin_topics_list_create, name="admin-topics-list-create"),

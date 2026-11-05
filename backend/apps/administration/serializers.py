@@ -1,8 +1,121 @@
 from rest_framework import serializers
-from apps.academics.models import GatePaper, Subject, Topic
+from apps.academics.models import GatePaper, Branch, BranchGatePaper, Subject, Topic
 from apps.questions.models import Question, StudentAttempt
 from apps.mock_tests.models import MockTest, MockTestQuestion, MockTestAttempt
 from apps.students.models import StudentProfile
+
+
+class BranchGatePaperSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Branch to GATE Paper many-to-many mappings.
+    """
+    branch_name = serializers.CharField(source="branch.name", read_only=True)
+    branch_code = serializers.CharField(source="branch.code", read_only=True)
+    gate_paper_code = serializers.CharField(source="gate_paper.code", read_only=True)
+    gate_paper_name = serializers.CharField(source="gate_paper.name", read_only=True)
+
+    class Meta:
+        model = BranchGatePaper
+        fields = [
+            "id",
+            "branch",
+            "branch_name",
+            "branch_code",
+            "gate_paper",
+            "gate_paper_code",
+            "gate_paper_name",
+            "is_primary",
+            "is_active",
+            "created_at",
+        ]
+
+
+class AdminGatePaperSerializer(serializers.ModelSerializer):
+    """
+    Serializer for GATE examination papers with their connected academic branches.
+    """
+    connected_branches = serializers.SerializerMethodField()
+    connected_branches_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GatePaper
+        fields = [
+            "code",
+            "name",
+            "is_active",
+            "connected_branches",
+            "connected_branches_count",
+            "created_at",
+        ]
+
+    def get_connected_branches(self, obj):
+        mappings = obj.branch_mappings.select_related("branch").all()
+        return [
+            {
+                "mapping_id": str(m.id),
+                "branch_id": str(m.branch.id),
+                "branch_name": m.branch.name,
+                "branch_code": m.branch.code,
+                "is_primary": m.is_primary,
+                "is_active": m.is_active,
+            }
+            for m in mappings
+        ]
+
+    def get_connected_branches_count(self, obj):
+        return obj.branch_mappings.count()
+
+
+class AdminBranchSerializer(serializers.ModelSerializer):
+    """
+    Administrative serializer for managing academic engineering branches.
+    """
+    slug = serializers.SlugField(required=False)
+    subjects_count = serializers.IntegerField(source="subjects.count", read_only=True)
+    gate_paper_code = serializers.CharField(source="gate_paper.code", read_only=True, default=None)
+    gate_paper_name = serializers.CharField(source="gate_paper.name", read_only=True, default=None)
+    connected_papers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Branch
+        fields = [
+            "id",
+            "name",
+            "code",
+            "slug",
+            "description",
+            "icon_name",
+            "display_order",
+            "is_active",
+            "is_published",
+            "gate_paper",
+            "gate_paper_code",
+            "gate_paper_name",
+            "connected_papers",
+            "subjects_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate(self, attrs):
+        from django.utils.text import slugify
+        if not attrs.get("slug"):
+            base_str = attrs.get("code") or attrs.get("name") or ""
+            attrs["slug"] = slugify(base_str)
+        return attrs
+
+    def get_connected_papers(self, obj):
+        mappings = obj.paper_mappings.select_related("gate_paper").all()
+        return [
+            {
+                "mapping_id": str(m.id),
+                "paper_code": m.gate_paper.code,
+                "paper_name": m.gate_paper.name,
+                "is_primary": m.is_primary,
+                "is_active": m.is_active,
+            }
+            for m in mappings
+        ]
 
 
 class AdminSubjectSerializer(serializers.ModelSerializer):
@@ -10,19 +123,27 @@ class AdminSubjectSerializer(serializers.ModelSerializer):
     Administrative serializer for creating and managing GATE subjects.
     """
     topics_count = serializers.IntegerField(source="topics.count", read_only=True)
-    paper_code = serializers.CharField(source="paper.code", read_only=True)
+    paper_code = serializers.CharField(source="paper.code", read_only=True, default=None)
+    branch_name = serializers.CharField(source="branch.name", read_only=True, default=None)
+    branch_code = serializers.CharField(source="branch.code", read_only=True, default=None)
 
     class Meta:
         model = Subject
         fields = [
             "id",
+            "branch",
+            "branch_name",
+            "branch_code",
             "paper",
             "paper_code",
+            "code",
             "name",
             "slug",
             "order_index",
             "description",
             "icon_name",
+            "is_active",
+            "is_published",
             "topics_count",
             "created_at",
         ]

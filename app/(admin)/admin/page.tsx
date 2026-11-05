@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Shield,
+  GitBranch,
+  Link2,
   BookOpen,
   PlusCircle,
   FileCheck2,
@@ -26,11 +28,15 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import BranchManagement, { AdminBranchItem } from "@/components/admin/BranchManagement";
+import GatePaperMapping, { BranchGateMappingItem, GatePaperItem } from "@/components/admin/GatePaperMapping";
+import SubjectManagement from "@/components/admin/SubjectManagement";
 
 interface AdminOverviewData {
   metrics: {
     total_students: number;
     active_students: number;
+    total_branches?: number;
     total_subjects: number;
     total_topics: number;
     total_questions: number;
@@ -90,8 +96,11 @@ interface AdminStudentItem {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "questions" | "subjects" | "mock-tests" | "students">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "branches" | "mappings" | "subjects" | "questions" | "students">("overview");
   const [overview, setOverview] = useState<AdminOverviewData | null>(null);
+  const [branches, setBranches] = useState<AdminBranchItem[]>([]);
+  const [mappings, setMappings] = useState<BranchGateMappingItem[]>([]);
+  const [gatePapers, setGatePapers] = useState<GatePaperItem[]>([]);
   const [questions, setQuestions] = useState<AdminQuestionItem[]>([]);
   const [subjects, setSubjects] = useState<AdminSubjectItem[]>([]);
   const [students, setStudents] = useState<AdminStudentItem[]>([]);
@@ -118,6 +127,9 @@ export default function AdminPage() {
   const [newIsPyq, setNewIsPyq] = useState<boolean>(false);
   const [newPyqYear, setNewPyqYear] = useState<number>(2024);
 
+  // Base API URL
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
   // Headers for role-protected admin requests
   const adminHeaders = {
     "Content-Type": "application/json",
@@ -129,21 +141,35 @@ export default function AdminPage() {
     setError(null);
     try {
       // 1. Fetch overview
-      const ovRes = await fetch("http://127.0.0.1:8000/api/v1/admin/overview/", { headers: adminHeaders });
-      if (!ovRes.ok) throw new Error("Could not authenticate administrative session");
+      const ovRes = await fetch(`${API_BASE}/api/v1/admin/overview/`, { headers: adminHeaders });
+      if (!ovRes.ok) {
+        const errBody = await ovRes.text().catch(() => "");
+        throw new Error(`Admin auth error (${ovRes.status}): ${errBody || "Could not authenticate administrative session"}`);
+      }
       const ovData = await ovRes.json();
       setOverview(ovData);
 
+      // 1B. Fetch branches (Stage 2)
+      const branchRes = await fetch(`${API_BASE}/api/v1/admin/branches/`, { headers: adminHeaders });
+      if (branchRes.ok) setBranches(await branchRes.json());
+
+      // 1C. Fetch GATE Papers and Mappings (Stage 2)
+      const paperRes = await fetch(`${API_BASE}/api/v1/admin/gate-papers/`, { headers: adminHeaders });
+      if (paperRes.ok) setGatePapers(await paperRes.json());
+
+      const mapRes = await fetch(`${API_BASE}/api/v1/admin/branch-gate-mappings/`, { headers: adminHeaders });
+      if (mapRes.ok) setMappings(await mapRes.json());
+
       // 2. Fetch questions
-      const qRes = await fetch("http://127.0.0.1:8000/api/v1/admin/questions/", { headers: adminHeaders });
+      const qRes = await fetch(`${API_BASE}/api/v1/admin/questions/`, { headers: adminHeaders });
       if (qRes.ok) setQuestions(await qRes.json());
 
       // 3. Fetch subjects
-      const subRes = await fetch("http://127.0.0.1:8000/api/v1/admin/subjects/", { headers: adminHeaders });
+      const subRes = await fetch(`${API_BASE}/api/v1/admin/subjects/`, { headers: adminHeaders });
       if (subRes.ok) setSubjects(await subRes.json());
 
       // 4. Fetch students
-      const studRes = await fetch("http://127.0.0.1:8000/api/v1/admin/students/", { headers: adminHeaders });
+      const studRes = await fetch(`${API_BASE}/api/v1/admin/students/`, { headers: adminHeaders });
       if (studRes.ok) setStudents(await studRes.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error loading admin console");
@@ -191,7 +217,7 @@ export default function AdminPage() {
         pyq_year: newIsPyq ? newPyqYear : null,
       };
 
-      const res = await fetch("http://127.0.0.1:8000/api/v1/admin/questions/", {
+      const res = await fetch(`${API_BASE}/api/v1/admin/questions/`, {
         method: "POST",
         headers: adminHeaders,
         body: JSON.stringify(payload),
@@ -218,7 +244,7 @@ export default function AdminPage() {
   const handleDeleteQuestion = async (questionId: string) => {
     if (!confirm("Are you sure you want to delete this question?")) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/v1/admin/questions/${questionId}/`, {
+      const res = await fetch(`${API_BASE}/api/v1/admin/questions/${questionId}/`, {
         method: "DELETE",
         headers: adminHeaders,
       });
@@ -295,8 +321,10 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto flex items-center gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl overflow-x-auto">
         {[
           { id: "overview", label: "Overview & Telemetry", icon: Shield },
-          { id: "questions", label: "Question Bank & PYQs", icon: BookOpen },
-          { id: "subjects", label: "Syllabus & Subjects", icon: Layers },
+          { id: "branches", label: "Branch Management", icon: GitBranch },
+          { id: "mappings", label: "GATE Paper Mapping", icon: Link2 },
+          { id: "subjects", label: "Subject Management", icon: BookOpen },
+          { id: "questions", label: "Question Bank & PYQs", icon: Layers },
           { id: "students", label: "Registered Students", icon: Users },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -342,9 +370,19 @@ export default function AdminPage() {
       {!loading && !error && activeTab === "overview" && overview && (
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Operational Metrics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] text-[var(--text-muted)] font-medium">Total Registered Students</span>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
+              <span className="text-[11px] text-[var(--text-muted)] font-medium">Academic Branches</span>
+              <p className="text-2xl font-extrabold text-blue-400 font-mono">
+                {overview.metrics.total_branches ?? branches.length}
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] font-mono">
+                {branches.filter((b) => b.is_published).length} published to LMS
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
+              <span className="text-[11px] text-[var(--text-muted)] font-medium">Registered Students</span>
               <p className="text-2xl font-extrabold text-[var(--text-primary)] font-mono">
                 {overview.metrics.total_students}
               </p>
@@ -353,8 +391,8 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] text-[var(--text-muted)] font-medium">Question Bank Size</span>
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
+              <span className="text-[11px] text-[var(--text-muted)] font-medium">Question Bank</span>
               <p className="text-2xl font-extrabold text-[#8B16F7] font-mono">
                 {overview.metrics.total_questions}
               </p>
@@ -363,18 +401,18 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] text-[var(--text-muted)] font-medium">Published Mock Tests</span>
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
+              <span className="text-[11px] text-[var(--text-muted)] font-medium">Mock Test Papers</span>
               <p className="text-2xl font-extrabold text-[#C42BEE] font-mono">
                 {overview.metrics.published_tests}
               </p>
               <p className="text-[10px] text-[var(--text-muted)] font-mono">
-                {overview.metrics.total_test_attempts} exam sessions recorded
+                {overview.metrics.total_test_attempts} exam sessions
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
-              <span className="text-[11px] text-[var(--text-muted)] font-medium">Curriculum Coverage</span>
+            <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1 col-span-2 sm:col-span-1">
+              <span className="text-[11px] text-[var(--text-muted)] font-medium">Curriculum Scope</span>
               <p className="text-2xl font-extrabold text-emerald-400 font-mono">
                 {overview.metrics.total_subjects} Subjects
               </p>
@@ -435,6 +473,42 @@ export default function AdminPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* TAB 1B: BRANCH MANAGEMENT (Stage 2) */}
+      {!loading && !error && activeTab === "branches" && (
+        <div className="max-w-6xl mx-auto">
+          <BranchManagement
+            branches={branches}
+            onRefresh={loadAdminData}
+            adminHeaders={adminHeaders}
+          />
+        </div>
+      )}
+
+      {/* TAB 1C: GATE PAPER MAPPING (Stage 2) */}
+      {!loading && !error && activeTab === "mappings" && (
+        <div className="max-w-6xl mx-auto">
+          <GatePaperMapping
+            mappings={mappings}
+            gatePapers={gatePapers}
+            branches={branches.map((b) => ({ id: b.id, name: b.name, code: b.code }))}
+            onRefresh={loadAdminData}
+            adminHeaders={adminHeaders}
+          />
+        </div>
+      )}
+
+      {/* TAB 1D: SUBJECT MANAGEMENT FOR EVERY BRANCH (Stage 3) */}
+      {!loading && !error && activeTab === "subjects" && (
+        <div className="max-w-6xl mx-auto">
+          <SubjectManagement
+            branches={branches.map((b) => ({ id: b.id, name: b.name, code: b.code }))}
+            gatePapers={gatePapers.map((p) => ({ code: p.code, name: p.name }))}
+            adminHeaders={adminHeaders}
+            onRefreshParent={loadAdminData}
+          />
         </div>
       )}
 

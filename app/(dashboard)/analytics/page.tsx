@@ -31,8 +31,9 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true);
     setError(null);
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/analytics/dashboard/");
+      const res = await fetch(`${API_BASE}/api/v1/analytics/dashboard/`);
       if (!res.ok) throw new Error("Failed to load analytics from server");
       const result: AnalyticsDashboardResponse = await res.json();
       setData(result);

@@ -41,6 +41,14 @@ class StudentProfile(models.Model):
         default=2026,
         help_text="Target examination year"
     )
+    enrolled_branch = models.ForeignKey(
+        "academics.Branch",
+        on_delete=models.SET_NULL,
+        related_name="enrolled_students",
+        null=True,
+        blank=True,
+        help_text="Undergraduate / academic engineering branch (e.g. CSE, ECE, ME)"
+    )
     primary_paper = models.ForeignKey(
         "academics.GatePaper",
         on_delete=models.PROTECT,

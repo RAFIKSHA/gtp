@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { fetchGatePapers, fetchStudentProfile, submitStudentOnboarding } from "@/lib/api/student";
+import { fetchLearningBranches, LearningBranch } from "@/lib/api/questions";
 import type { GatePaper, StudentProfile, PrepLevel } from "@/types/student";
 
 export default function StudentCheckInPage() {
@@ -28,6 +29,7 @@ export default function StudentCheckInPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [papers, setPapers] = useState<GatePaper[]>([]);
+  const [branches, setBranches] = useState<LearningBranch[]>([]);
   const [formData, setFormData] = useState({
     fullName: "Student Aspirant",
     email: "student@codexpetra.com",
@@ -36,6 +38,7 @@ export default function StudentCheckInPage() {
     collegeName: "",
     graduationYear: 2027,
     targetGateYear: 2026,
+    enrolledBranch: "",
     primaryPaper: "CS",
     secondaryPaper: "",
     previousAttemptScore: "",
@@ -54,15 +57,17 @@ export default function StudentCheckInPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const [papersData, profileData] = await Promise.all([
+        const [papersData, profileData, branchesData] = await Promise.all([
           fetchGatePapers().catch(() => [
             { code: "CS", name: "Computer Science & Information Technology", is_active: true, allowed_secondary_papers: ["DA", "EC"] },
             { code: "DA", name: "Data Science & Artificial Intelligence", is_active: true, allowed_secondary_papers: ["CS"] },
           ]),
           fetchStudentProfile().catch(() => null),
+          fetchLearningBranches().catch(() => []),
         ]);
 
         setPapers(papersData);
+        setBranches(branchesData);
 
         if (profileData) {
           setFormData({
@@ -73,6 +78,7 @@ export default function StudentCheckInPage() {
             collegeName: profileData.college_name || "",
             graduationYear: profileData.graduation_year || 2027,
             targetGateYear: profileData.target_gate_year || 2026,
+            enrolledBranch: profileData.enrolled_branch || (branchesData.length > 0 ? branchesData[0].id : ""),
             primaryPaper: profileData.primary_paper || "CS",
             secondaryPaper: profileData.secondary_paper || "",
             previousAttemptScore: profileData.previous_attempt_score ? String(profileData.previous_attempt_score) : "",
@@ -80,6 +86,8 @@ export default function StudentCheckInPage() {
             dailyPrepHours: profileData.daily_prep_hours || "2-3 Hours",
             preferredLearningMethod: profileData.preferred_learning_method || "Concept First + PYQs",
           });
+        } else if (branchesData.length > 0) {
+          setFormData((prev) => ({ ...prev, enrolledBranch: branchesData[0].id }));
         }
       } catch (err) {
         console.error("Failed to load onboarding info:", err);
@@ -104,6 +112,7 @@ export default function StudentCheckInPage() {
         college_name: formData.collegeName,
         graduation_year: formData.graduationYear ? Number(formData.graduationYear) : null,
         target_gate_year: Number(formData.targetGateYear),
+        enrolled_branch: formData.enrolledBranch ? formData.enrolledBranch : null,
         primary_paper: formData.primaryPaper,
         secondary_paper: formData.secondaryPaper ? formData.secondaryPaper : null,
         prep_level: formData.prepLevel,
@@ -281,6 +290,24 @@ export default function StudentCheckInPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
+                  Academic Engineering Branch <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={formData.enrolledBranch}
+                  onChange={(e) => setFormData({ ...formData, enrolledBranch: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[#8B16F7]"
+                >
+                  <option value="">Select your discipline</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
                   Target Exam Year

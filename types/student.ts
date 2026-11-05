@@ -20,6 +20,9 @@ export interface StudentProfile {
   college_name: string;
   graduation_year: number | null;
   target_gate_year: number;
+  enrolled_branch?: string | null;
+  enrolled_branch_name?: string | null;
+  enrolled_branch_code?: string | null;
   primary_paper: string | null;
   secondary_paper: string | null;
   primary_paper_details?: GatePaper | null;
